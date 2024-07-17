@@ -1,19 +1,37 @@
 <?php
 /*
-Plugin Name: Social Media Links
+Plugin Name: Social Media One Click
 Description: Allows users to easily add their social media links using a shortcode.
 Version: 1.0
-Author: Your Name
+* License: GPLv2 or later
+Author: Habib Ali
 */
+
+if (!defined('ABSPATH')) {
+    die("You are not eligible to access the resources."); // Exit if accessed directly
+} else {
+    
+
 
 // Include the settings page file
 include_once(plugin_dir_path(__FILE__) . '/include/social-media-main.php');
 
 // Enqueue the plugin's stylesheet
 function social_media_links_enqueue_styles() {
-    wp_enqueue_style('social-media-links-style', plugins_url('style.css', __FILE__));
+    global $post;
+
+    // Check if we're inside the main loop in a post or page
+    if (is_a($post, 'WP_Post') && stripos($post->post_content, '[social_media_links') !== false) {
+        wp_enqueue_style(
+            'social-media-links-style',
+            plugins_url('style.css', __FILE__),
+            array(),
+            '1.0'
+        );
+    }
 }
 add_action('wp_enqueue_scripts', 'social_media_links_enqueue_styles');
+
 
 // Register the shortcode
 function social_media_links_shortcode($atts) {
@@ -53,3 +71,6 @@ function social_media_links_add_menu_item() {
     );
 }
 add_action('admin_menu', 'social_media_links_add_menu_item');
+
+
+}
