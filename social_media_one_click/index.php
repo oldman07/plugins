@@ -7,6 +7,7 @@ Version: 1.0
 Author: Habib Ali
 */
 
+//only allow to access properly from admin side to secure the data
 if (!defined('ABSPATH')) {
     die("You are not eligible to access the resources."); // Exit if accessed directly
 } else {
@@ -69,8 +70,37 @@ function social_media_links_add_menu_item() {
         'dashicons-share-alt', // Icon URL
         6 // Position in the menu; lower numbers correspond with higher positions
     );
+    add_submenu_page(
+        'social-media-links-settings', // Parent slug
+        'Custom Contact Form', // Page title
+        'Custom Contact Forms', // Menu title
+        'manage_options', // Capability required to access the page
+        'social-media-links-settings', // Menu slug for this submenu
+        'social_media_links_settings_page' // Function that renders the submenu page
+    );
+
+    // Add second submenu
+    add_submenu_page(
+        'social-media-links-settings', // Parent slug
+        'Second Submenu', // Page title
+        'Second Submenu', // Menu title
+        'manage_options', // Capability required to access the page
+        'custom-contact-form-submenu2', // Menu slug for this submenu
+        'social_media_one_click_second_submenu_function' // Function that renders the submenu page
+    );
 }
 add_action('admin_menu', 'social_media_links_add_menu_item');
 
+// function social_media_links_settings_page() {
+//     echo "<div class='wrap'>";
+//     echo "<h1>Custom Contact Form - Submenu</h1>";
+//     echo "</div>";
+// }
+
+function social_media_one_click_second_submenu_function() {
+    echo "<div class='wrap'>";
+    echo "<h1>Second Submenu</h1>";
+    echo "</div>";
+}
 
 }
