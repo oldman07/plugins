@@ -13,9 +13,12 @@ if (!defined('ABSPATH')) {
 } else {
     
 
+// Define the constant at the top of your main plugin file
+define('SOCIAL_MEDIA_MAIN_PATH', plugin_dir_path(__FILE__) . '/include/social-media-main.php');
 
-// Include the settings page file
-include_once(plugin_dir_path(__FILE__) . '/include/social-media-main.php');
+// Later in your code, when you need to include the file, use the constant
+include_once(SOCIAL_MEDIA_MAIN_PATH);
+
 
 // Enqueue the plugin's stylesheet
 function social_media_links_enqueue_styles() {
@@ -91,11 +94,7 @@ function social_media_links_add_menu_item() {
 }
 add_action('admin_menu', 'social_media_links_add_menu_item');
 
-// function social_media_links_settings_page() {
-//     echo "<div class='wrap'>";
-//     echo "<h1>Custom Contact Form - Submenu</h1>";
-//     echo "</div>";
-// }
+
 
 function social_media_one_click_second_submenu_function() {
     echo "<div class='wrap'>";
