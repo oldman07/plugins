@@ -1,0 +1,425 @@
+
+
+
+
+
+
+
+
+
+
+<!-- cube selection show  -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Three.js Cube Selection</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="scene-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    const container = document.getElementById('scene-container');
+
+    // Create a scene
+    const scene = new THREE.Scene();
+
+    // Create a camera
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
+    // Create a renderer
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    const geometry = new THREE.BoxGeometry(1, 1, 1); // Cube dimensions
+    const material = new THREE.MeshBasicMaterial({color: 0x00ff00}); // Green color
+
+    // Create three cubes
+    const cube1 = new THREE.Mesh(geometry, material);
+    cube1.position.set(-2, 0, 0);
+
+    const cube2 = new THREE.Mesh(geometry, material);
+    cube2.position.set(0, 0, 0);
+
+    const cube3 = new THREE.Mesh(geometry, material);
+    cube3.position.set(2, 0, 0);
+
+    // Add cubes to the scene
+    scene.add(cube1, cube2, cube3);
+
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function onMouseMove(event) {
+        // Normalize mouse coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    }
+
+    window.addEventListener('mousemove', onMouseMove, false);
+    window.addEventListener('click', onSelectObject, false);
+
+    // Array to hold our cubes
+    const objects = [cube1, cube2, cube3];
+
+    function onSelectObject() {
+        raycaster.setFromCamera(mouse, camera);
+
+        // Calculate objects intersecting the picking ray
+        const intersects = raycaster.intersectObjects(objects);
+
+        if (intersects.length > 0) {
+            console.log('Selected cube:', intersects[0].object);
+        }
+    }
+</script>
+
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Three.js Cube Example</title>
+    <style>
+        body { margin: 0; }
+        #canvas-container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        select { position: absolute; top: 20px; left: 20px; z-index: 100; }
+    </style>
+</head>
+<body>
+
+<select id="cube-color">
+    <option value="">Select a cube color...</option>
+    <option value="red">Red Cube</option>
+    <option value="blue">Blue Cube</option>
+</select>
+
+<div id="canvas-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let scene, camera, renderer;
+    let zOffset = 0; // Variable to keep track of Z-offset for cubes
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const light = new THREE.AmbientLight(0xffffff); // Soft white light
+        scene.add(light);
+
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    function addCube(color) {
+        const geometry = new THREE.BoxGeometry(1, 1, 1); // Cube dimensions
+        const material = new THREE.MeshBasicMaterial({color: color});
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.z = zOffset; // Position the cube based on the current Z-offset
+        scene.add(cube);
+        zOffset += 1; // Increment the Z-offset for the next cube
+    }
+
+    $(document).ready(function() {
+        init();
+
+        $('#cube-color').change(function() {
+            const selectedColor = $(this).val();
+            if (selectedColor === "red" || selectedColor === "blue") {
+                addCube(selectedColor);
+            }
+        });
+    });
+</script>
+
+</body>
+</html> --> 
+
+
+
+
+
+
+<!-- dimesion changes -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Cube</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <form id="dimensionsForm">
+        <label for="length">Length:</label><br>
+        <input type="number" id="length" name="length" min="0"><br>
+        <label for="width">Width:</label><br>
+        <input type="number" id="width" name="width" min="0"><br>
+        <label for="height">Height:</label><br>
+        <input type="number" id="height" name="height" min="0"><br>
+        <button type="submit">Update Dimensions</button>
+    </form>
+
+    <script>
+        // Initialize variables
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create a cube
+        const originalDimensions = [1, 1, 1]; // Default size
+        const geometry = new THREE.BoxGeometry(...originalDimensions);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        let cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        camera.position.z = 5;
+
+        // Function to update cube dimensions
+        function updateCubeDimensions(newLength, newWidth, newHeight) {
+            const newDimensions = [newLength || originalDimensions[0], newWidth || originalDimensions[1], newHeight || originalDimensions[2]];
+            const newGeometry = new THREE.BoxGeometry(...newDimensions);
+
+            // Replace the old geometry with the new one
+            cube.geometry.dispose(); // Dispose of the old geometry to free resources
+            cube.geometry = newGeometry;
+
+            // Adjust camera if necessary
+            camera.updateProjectionMatrix();
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle form submission
+        document.getElementById('dimensionsForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission behavior
+
+            const length = document.getElementById('length').value;
+            const width = document.getElementById('width').value;
+            const height = document.getElementById('height').value;
+
+            updateCubeDimensions(length, width, height);
+
+            // Reset form inputs
+            document.getElementById('length').value = '';
+            document.getElementById('width').value = '';
+            document.getElementById('height').value = '';
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+<!-- 3d Span -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Three.js Cube Viewer</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="container" style="width: 100%; height: 100vh;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const container = document.getElementById('container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        camera.position.z = 5;
+
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+
+        scene.add(cube);
+
+        let mouseX = 0;
+        let mouseY = 0;
+
+        function onMouseMove(event) {
+            mouseX = (event.clientX - window.innerWidth / 2) * -2 / window.innerWidth;
+            mouseY = (event.clientY - window.innerHeight / 2) * 2 / window.innerHeight;
+        }
+
+        window.addEventListener('mousemove', onMouseMove, false);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            cube.rotation.y = mouseX;
+            cube.rotation.x = mouseY;
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- texture code  -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive 3D Cube</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="scene-container"></div>
+
+<button onclick="changeTexture('clay.jpg')">Texture 1</button>
+<button onclick="changeTexture('rubber.jpg')">Texture 2</button>
+
+<input type="range" min="1" max="10" value="1" onchange="adjustSize(this.value)" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let scene, camera, renderer, cube;
+
+    // Set up scene, camera, and renderer
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('scene-container').appendChild(renderer.domElement);
+
+        // Load a texture and create a cube
+        const loader = new THREE.TextureLoader();
+        loader.load('clay.jpg', function(texture) {
+            const geometry = new THREE.BoxGeometry(); // Create a box geometry
+            const material = new THREE.MeshBasicMaterial({ map: texture }); // Apply the texture to the material
+            cube = new THREE.Mesh(geometry, material); // Create a mesh using geometry and material
+            scene.add(cube); // Add the cube to the scene
+
+            camera.position.z = 5; // Position the camera
+        });
+
+        animate(); // Start animation loop
+    }
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    // Change texture
+    function changeTexture(path) {
+        const loader = new THREE.TextureLoader();
+        loader.load(path, function(texture) {
+            cube.material.map = texture;
+            cube.material.needsUpdate = true; // Tell Three.js to update the material
+        });
+    }
+
+    // Adjust size
+    function adjustSize(value) {
+        cube.scale.set(value, value, value); // Adjust all dimensions equally
+    }
+
+    // Example AJAX call to save model dimensions (PHP script not shown)
+    function saveModelDimensions(width, height, depth) {
+        $.ajax({
+            url: 'saveModel.php',
+            method: 'POST',
+            data: {width: width, height: height, depth: depth},
+            success: function(response) {
+                console.log("Model saved:", response);
+            }
+        });
+    }
+
+    init(); // Initialize the scene
+</script>
+
+</body>
+</html> -->
