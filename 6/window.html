@@ -178,6 +178,20 @@
             child.material.emissive.set(0x555555);
           }
         });
+
+        updateControls();
+      }
+    }
+
+    function updateControls() {
+      if (currentModel) {
+        document.getElementById('posX').value = currentModel.position.x.toFixed(1);
+        document.getElementById('posY').value = currentModel.position.y.toFixed(1);
+        document.getElementById('posZ').value = currentModel.position.z.toFixed(1);
+
+        document.getElementById('length').value = currentModel.scale.x.toFixed(1);
+        document.getElementById('width').value = currentModel.scale.z.toFixed(1);
+        document.getElementById('height').value = currentModel.scale.y.toFixed(1);
       }
     }
 
@@ -198,6 +212,211 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js Model Loader with Transform Controls</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+    #buttons { position: absolute; top: 10px; left: 10px; }
+    button { margin: 5px; }
+    .controls { position: absolute; top: 80px; left: 10px; }
+    .controls input { margin: 5px; }
+  </style>
+</head>
+<body>
+  <div id="buttons">
+    <button id="addModel1">Add Model 1</button>
+    <button id="addModel2">Add Model 2</button>
+    <button id="addModel3">Add Model 3</button>
+    <button id="texture1">Apply Texture 1</button>
+    <button id="texture2">Apply Texture 2</button>
+  </div>
+  <div class="controls">
+    <h3>Position</h3>
+    <label>X: <input type="number" id="posX" step="0.1" value="0"></label><br>
+    <label>Y: <input type="number" id="posY" step="0.1" value="0"></label><br>
+    <label>Z: <input type="number" id="posZ" step="0.1" value="0"></label><br>
+    <button id="applyPosition">Apply Position</button>
+    <h3>Dimensions</h3>
+    <label>Length: <input type="number" id="length" step="0.1" value="1"></label><br>
+    <label>Width: <input type="number" id="width" step="0.1" value="1"></label><br>
+    <label>Height: <input type="number" id="height" step="0.1" value="1"></label><br>
+    <button id="applyDimensions">Apply Dimensions</button>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/TextureLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    let scene, camera, renderer, loader, textureLoader, controls;
+    let models = [];
+    let currentModel = null;
+    let raycaster, mouse;
+
+    function init() {
+      // Create a scene
+      scene = new THREE.Scene();
+      
+      // Create a camera
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
+      
+      // Create a renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      
+      // Add ambient light
+      const light = new THREE.AmbientLight(0x404040);
+      scene.add(light);
+      
+      // Add directional light
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+      directionalLight.position.set(0, 1, 1).normalize();
+      scene.add(directionalLight);
+
+      // Initialize loaders
+      loader = new THREE.GLTFLoader();
+      textureLoader = new THREE.TextureLoader();
+
+      // Initialize controls
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.25;
+      controls.enableZoom = true;
+
+      // Initialize raycaster and mouse
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+
+      // Add event listeners for buttons
+      document.getElementById('addModel1').addEventListener('click', () => loadModel('models/cube.glb', 'Model 1'));
+      document.getElementById('addModel2').addEventListener('click', () => loadModel('models/sphere.glb', 'Model 2'));
+      document.getElementById('addModel3').addEventListener('click', () => loadModel('models/torus.glb', 'Model 3'));
+      document.getElementById('texture1').addEventListener('click', () => applyTexture('clay.jpg'));
+      document.getElementById('texture2').addEventListener('click', () => applyTexture('rubber.jpg'));
+      document.getElementById('applyPosition').addEventListener('click', applyPosition);
+      document.getElementById('applyDimensions').addEventListener('click', applyDimensions);
+
+      // Add event listeners for mouse interaction
+      window.addEventListener('mousemove', onMouseMove, false);
+      window.addEventListener('click', onClick, false);
+
+      // Start rendering the scene
+      animate();
+    }
+
+    function loadModel(modelPath, modelName) {
+      loader.load(modelPath, function(gltf) {
+        const model = gltf.scene;
+        model.name = modelName; // Store model name for identification
+        models.push(model); // Add to models list
+        scene.add(model);
+      }, undefined, function(error) {
+        console.error(error);
+      });
+    }
+
+    function applyTexture(texturePath) {
+      if (currentModel) {
+        textureLoader.load(texturePath, function(texture) {
+          currentModel.traverse((child) => {
+            if (child.isMesh) {
+              child.material.map = texture;
+              child.material.needsUpdate = true;
+            }
+          });
+        }, undefined, function(error) {
+          console.error(error);
+        });
+      } else {
+        console.log('No model selected to apply texture.');
+      }
+    }
+
+    function applyPosition() {
+      if (currentModel) {
+        const x = parseFloat(document.getElementById('posX').value);
+        const y = parseFloat(document.getElementById('posY').value);
+        const z = parseFloat(document.getElementById('posZ').value);
+
+        currentModel.position.set(x, y, z);
+      } else {
+        console.log('No model selected to apply position.');
+      }
+    }
+
+    function applyDimensions() {
+      if (currentModel) {
+        const length = parseFloat(document.getElementById('length').value);
+        const width = parseFloat(document.getElementById('width').value);
+        const height = parseFloat(document.getElementById('height').value);
+
+        currentModel.scale.set(length, height, width);
+      } else {
+        console.log('No model selected to apply dimensions.');
+      }
+    }
+
+    function onMouseMove(event) {
+      event.preventDefault();
+
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    }
+
+    function onClick(event) {
+      event.preventDefault();
+
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects(models, true);
+
+      if (intersects.length > 0) {
+        if (currentModel) {
+          currentModel.traverse((child) => {
+            if (child.isMesh) {
+              child.material.emissive.set(0x000000);
+            }
+          });
+        }
+
+        currentModel = intersects[0].object.parent;
+
+        currentModel.traverse((child) => {
+          if (child.isMesh) {
+            child.material.emissive.set(0x555555);
+          }
+        });
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html> -->
 
 
 
@@ -1270,153 +1489,4 @@
 </body>
 </html>
  -->
-
-
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Three.js Model Loader with Textures</title>
-  <style>
-    body { margin: 0; }
-    canvas { display: block; }
-    #buttons { position: absolute; top: 10px; left: 10px; }
-    button { margin: 5px; }
-    .controls { position: absolute; top: 80px; left: 10px; }
-    .controls input { margin: 5px; }
-  </style>
-</head>
-<body>
-  <div id="buttons">
-    <button id="addModel1">Add Model 1</button>
-    <button id="addModel2">Add Model 2</button>
-    <button id="addModel3">Add Model 3</button>
-    <button id="texture1">Apply Texture 1</button>
-    <button id="texture2">Apply Texture 2</button>
-  </div>
-  <div class="controls">
-    <label>Length: <input type="number" id="length" step="0.1" value="1"></label><br>
-    <label>Width: <input type="number" id="width" step="0.1" value="1"></label><br>
-    <label>Height: <input type="number" id="height" step="0.1" value="1"></label><br>
-    <button id="applyDimensions">Apply Dimensions</button>
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/TextureLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script>
-    let scene, camera, renderer, loader, textureLoader, controls;
-    let currentModel = null;
-
-    function init() {
-      // Create a scene
-      scene = new THREE.Scene();
-      
-      // Create a camera
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.z = 5;
-      
-      // Create a renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
-      
-      // Add ambient light
-      const light = new THREE.AmbientLight(0x404040);
-      scene.add(light);
-      
-      // Add directional light
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(0, 1, 1).normalize();
-      scene.add(directionalLight);
-
-      // Initialize loaders
-      loader = new THREE.GLTFLoader();
-      textureLoader = new THREE.TextureLoader();
-
-      // Initialize controls
-      controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.25;
-      controls.enableZoom = true;
-
-      // Add event listeners for buttons
-      document.getElementById('addModel1').addEventListener('click', () => loadModel('models/cube.glb'));
-      document.getElementById('addModel2').addEventListener('click', () => loadModel('models/sphere.glb'));
-      document.getElementById('addModel3').addEventListener('click', () => loadModel('models/torus.glb'));
-      document.getElementById('texture1').addEventListener('click', () => applyTexture('clay.jpg'));
-      document.getElementById('texture2').addEventListener('click', () => applyTexture('rubber.jpg'));
-      document.getElementById('applyDimensions').addEventListener('click', applyDimensions);
-
-      // Start rendering the scene
-      animate();
-    }
-
-    function loadModel(modelPath) {
-      loader.load(modelPath, function(gltf) {
-        // Remove the previous model if it exists
-        if (currentModel) {
-          scene.remove(currentModel);
-        }
-
-        // Add the new model
-        currentModel = gltf.scene;
-        scene.add(currentModel);
-      }, undefined, function(error) {
-        console.error(error);
-      });
-    }
-
-    function applyTexture(texturePath) {
-      if (currentModel) {
-        textureLoader.load(texturePath, function(texture) {
-          currentModel.traverse((child) => {
-            if (child.isMesh) {
-              child.material.map = texture;
-              child.material.needsUpdate = true;
-            }
-          });
-        }, undefined, function(error) {
-          console.error(error);
-        });
-      } else {
-        console.log('No model loaded to apply texture.');
-      }
-    }
-
-    function applyDimensions() {
-      if (currentModel) {
-        const length = parseFloat(document.getElementById('length').value);
-        const width = parseFloat(document.getElementById('width').value);
-        const height = parseFloat(document.getElementById('height').value);
-        
-        currentModel.traverse((child) => {
-          if (child.isMesh) {
-            child.scale.set(length, height, width);
-          }
-        });
-      } else {
-        console.log('No model loaded to apply dimensions.');
-      }
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
-      renderer.render(scene, camera);
-    }
-
-    // Handle window resize
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    init();
-  </script>
-</body>
-</html> -->
 

@@ -1,0 +1,15 @@
+.igp-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.igp-gallery-item {
+    flex: 1 1 calc(33.333% - 10px);
+    box-sizing: border-box;
+}
+
+.igp-gallery-item img {
+    width: 100%;
+    height: auto;
+}
