@@ -14,10 +14,10 @@ if (!defined('ABSPATH')) {
 // Enqueue Bootstrap and Tailwind CSS when the plugin is activated
 function add_bootstrap_and_tailwind() {
     // Enqueue Bootstrap CSS
-    wp_enqueue_style('bootstrap-csss', plugin_dir_url(__FILE__) . 'assets/css/bootstrap.css');
+    wp_enqueue_style('bootstrap-css', plugin_dir_url(__FILE__) . 'assets/css/bootstrap.css');
 
-    // Enqueue Tailwind CSS (assuming you're adding it locally as well)
-    wp_enqueue_style('tailwind-css', plugin_dir_url(__FILE__) . 'css/tailwind.min.css');
+    // Enqueue Tailwind CSS from an external link
+    wp_enqueue_style('tailwind-css', 'https://cdn.jsdelivr.net/npm/tailwindcss@^2/dist/tailwind.min.css');
 }
 add_action('wp_enqueue_scripts', 'add_bootstrap_and_tailwind');
 

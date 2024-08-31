@@ -1,0 +1,6 @@
+body { margin: 0; }
+canvas { display: block; }
+#buttons { position: absolute; top: 10px; left: 10px; }
+button { margin: 5px; }
+.controls { position: absolute; top: 80px; left: 10px; }
+.controls input { margin: 5px; }

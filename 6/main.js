@@ -1,79 +1,203 @@
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+let scene, camera, renderer, loader, textureLoader, controls;
+let models = [];
+let currentModel = null;
+let raycaster, mouse;
+let firstModel = null;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.outputColorSpace = THREE.SRGBColorSpace;
+function init() {
+  // Create a scene
+  scene = new THREE.Scene();
+  
+  // Create a camera
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 5;
+  
+  // Create a renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+  
+  // Add ambient light
+  const light = new THREE.AmbientLight(0x404040);
+  scene.add(light);
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000);
-renderer.setPixelRatio(window.devicePixelRatio);
+  // Add directional light
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+  directionalLight.position.set(0.5, 1, 1).normalize();
+  scene.add(directionalLight);
 
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-document.body.appendChild(renderer.domElement);
-
-const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-camera.position.set(4, 5, 11);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.enablePan = false;
-controls.minDistance = 5;
-controls.maxDistance = 20;
-controls.minPolarAngle = 0.5;
-controls.maxPolarAngle = 1.5;
-controls.autoRotate = false;
-controls.target = new THREE.Vector3(0, 1, 0);
-controls.update();
-
-const groundGeometry = new THREE.PlaneGeometry(20, 20, 32, 32);
-groundGeometry.rotateX(-Math.PI / 2);
-const groundMaterial = new THREE.MeshStandardMaterial({
-  color: 0x555555,
-  side: THREE.DoubleSide
-});
-const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
-groundMesh.castShadow = false;
-groundMesh.receiveShadow = true;
-scene.add(groundMesh);
-
-const spotLight = new THREE.SpotLight(0xffffff, 3000, 100, 0.22, 1);
-spotLight.position.set(0, 25, 0);
-spotLight.castShadow = true;
-spotLight.shadow.bias = -0.0001;
-scene.add(spotLight);
-
-const loader = new GLTFLoader().setPath('public/millennium_falcon/');
-loader.load('cube.gltf', (gltf) => {
-  console.log('loading model');
-  const mesh = gltf.scene;
-
-  mesh.traverse((child) => {
-    if (child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-    }
+  // Load HDRI environment map
+  const rgbeLoader = new THREE.RGBELoader();
+  rgbeLoader.setPath('environment/'); // Set the path to the HDRI file
+  rgbeLoader.load('outdoor.hdr', function(texture) {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = texture;
+    scene.background = texture;
+    console.log("HDRI loaded successfully");
+  }, undefined, function(error) {
+    console.error('Error loading HDRI file:', error);
   });
 
-  mesh.position.set(0, 1.05, -1);
-  scene.add(mesh);
+  // Initialize loaders
+  loader = new THREE.GLTFLoader();
+  textureLoader = new THREE.TextureLoader();
 
-  document.getElementById('progress-container').style.display = 'none';
-}, (xhr) => {
-  console.log(`loading ${xhr.loaded / xhr.total * 100}%`);
-}, (error) => {
-  console.error(error);
-});
+  // Initialize controls
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.25;
+  controls.enableZoom = true;
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  // Initialize raycaster and mouse
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  // Add event listeners for buttons
+  document.getElementById('AddWindowFrame1').addEventListener('click', () => loadModel('models/windows1.glb', 'Window 1'));
+  document.getElementById('AddWindowFrame2').addEventListener('click', () => loadModel('models/windows2.glb', 'Window 2'));
+  document.getElementById('addModel3').addEventListener('click', () => loadModel('models/torus.glb', 'Torus'));
+  document.getElementById('texture1').addEventListener('click', () => applyTexture('clay.jpg'));
+  document.getElementById('texture2').addEventListener('click', () => applyTexture('rubber.jpg'));
+  document.getElementById('applyPosition').addEventListener('click', applyPosition);
+  document.getElementById('applyDimensions').addEventListener('click', applyDimensions);
+  document.getElementById('parentAll').addEventListener('click', parentAllModels);
+
+  // Add event listeners for mouse interaction
+  window.addEventListener('mousemove', onMouseMove, false);
+  window.addEventListener('click', onClick, false);
+
+  // Start rendering the scene
+  animate();
+}
+
+function loadModel(modelPath, modelName) {
+  loader.load(modelPath, function(gltf) {
+    const model = gltf.scene;
+    model.name = modelName; // Store model name for identification
+
+    if (!firstModel) {
+      // This is the first model
+      firstModel = model;
+      scene.add(firstModel);
+    } else {
+      // Add model to the scene (not parented yet)
+      scene.add(model);
+    }
+
+    models.push(model); // Add to models list
+
+    console.log(firstModel); // Debugging: Check the hierarchy
+
+    // Disable buttons once a model is added
+    document.getElementById('AddWindowFrame1').disabled = true;
+    document.getElementById('AddWindowFrame2').disabled = true;
+    document.getElementById('addModel3').disabled = firstModel ? false : true; // Enable/Disable based on firstModel
+  }, undefined, function(error) {
+    console.error(error);
+  });
+}
+
+function applyTexture(texturePath) {
+  if (currentModel) {
+    textureLoader.load(texturePath, function(texture) {
+      currentModel.traverse((child) => {
+        if (child.isMesh) {
+          child.material.map = texture;
+          child.material.needsUpdate = true;
+        }
+      });
+    }, undefined, function(error) {
+      console.error(error);
+    });
+  } else {
+    console.log('No model selected to apply texture.');
+  }
+}
+
+function applyPosition() {
+  if (currentModel) {
+    const x = parseFloat(document.getElementById('posX').value);
+    const y = parseFloat(document.getElementById('posY').value);
+    const z = parseFloat(document.getElementById('posZ').value);
+
+    currentModel.position.set(x, y, z);
+  } else {
+    console.log('No model selected to apply position.');
+  }
+}
+
+function applyDimensions() {
+  if (currentModel) {
+    const length = parseFloat(document.getElementById('length').value);
+    const width = parseFloat(document.getElementById('width').value);
+    const height = parseFloat(document.getElementById('height').value);
+
+    currentModel.scale.set(length, height, width);
+  } else {
+    console.log('No model selected to apply dimensions.');
+  }
+}
+
+function parentAllModels() {
+  if (firstModel && models.length > 1) {
+    models.forEach((model, index) => {
+      if (index !== 0) { // Skip the first model (it’s the parent already)
+        firstModel.add(model);
+        model.position.set(0, 0, 0); // Optional: Adjust the position if needed
+      }
+    });
+    console.log('All models parented to the first model');
+  } else {
+    console.log('No models to parent or only one model loaded.');
+  }
+}
+
+function onMouseMove(event) {
+  event.preventDefault();
+
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+}
+
+function onClick(event) {
+  event.preventDefault();
+
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersects = raycaster.intersectObjects(models, true);
+
+  if (intersects.length > 0) {
+    if (currentModel) {
+      currentModel.traverse((child) => {
+        if (child.isMesh) {
+          child.material.emissive.set(0x000000);
+        }
+      });
+    }
+
+    currentModel = intersects[0].object.parent;
+
+    currentModel.traverse((child) => {
+      if (child.isMesh) {
+        child.material.emissive.set(0x555555);
+      }
+    });
+
+    updateControls();
+  }
+}
+
+function updateControls() {
+  if (currentModel) {
+    document.getElementById('posX').value = currentModel.position.x.toFixed(1);
+    document.getElementById('posY').value = currentModel.position.y.toFixed(1);
+    document.getElementById('posZ').value = currentModel.position.z.toFixed(1);
+
+    document.getElementById('length').value = currentModel.scale.x.toFixed(1);
+    document.getElementById('width').value = currentModel.scale.z.toFixed(1);
+    document.getElementById('height').value = currentModel.scale.y.toFixed(1);
+  }
+}
 
 function animate() {
   requestAnimationFrame(animate);
@@ -81,4 +205,650 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-animate();
+init();
+
+
+
+
+
+
+
+
+
+
+
+
+
+// let scene, camera, renderer, loader, textureLoader, controls;
+// let models = [];
+// let currentModel = null;
+// let raycaster, mouse;
+// let firstModel = null;
+
+// function init() {
+//   // Create a scene
+//   scene = new THREE.Scene();
+  
+//   // Create a camera
+//   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+//   camera.position.z = 5;
+  
+//   // Create a renderer
+//   renderer = new THREE.WebGLRenderer({ antialias: true });
+//   renderer.setSize(window.innerWidth, window.innerHeight);
+//   document.body.appendChild(renderer.domElement);
+  
+//   // Add ambient light
+//   const light = new THREE.AmbientLight(0x404040);
+//   scene.add(light);
+
+//   // Add directional light
+//   const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+//   directionalLight.position.set(0.5, 1, 1).normalize();
+//   scene.add(directionalLight);
+
+//   // Load HDRI environment map
+//   const rgbeLoader = new THREE.RGBELoader();
+//   rgbeLoader.setPath('environment/'); // Set the path to the HDRI file
+//   rgbeLoader.load('outdoor.hdr', function(texture) {
+//     texture.mapping = THREE.EquirectangularReflectionMapping;
+//     scene.environment = texture;
+//     scene.background = texture;
+//     console.log("HDRI loaded successfully");
+//   }, undefined, function(error) {
+//     console.error('Error loading HDRI file:', error);
+//   });
+
+//   // Initialize loaders
+//   loader = new THREE.GLTFLoader();
+//   textureLoader = new THREE.TextureLoader();
+
+//   // Initialize controls
+//   controls = new THREE.OrbitControls(camera, renderer.domElement);
+//   controls.enableDamping = true;
+//   controls.dampingFactor = 0.25;
+//   controls.enableZoom = true;
+
+//   // Initialize raycaster and mouse
+//   raycaster = new THREE.Raycaster();
+//   mouse = new THREE.Vector2();
+
+//   // Add event listeners for buttons
+//   document.getElementById('AddWindowFrame1').addEventListener('click', () => loadModel('models/windows1.glb', 'Window 1'));
+//   document.getElementById('AddWindowFrame2').addEventListener('click', () => loadModel('models/windows2.glb', 'Window 2'));
+//   document.getElementById('addModel3').addEventListener('click', () => loadModel('models/torus.glb', 'Torus'));
+//   document.getElementById('texture1').addEventListener('click', () => applyTexture('clay.jpg'));
+//   document.getElementById('texture2').addEventListener('click', () => applyTexture('rubber.jpg'));
+//   document.getElementById('applyPosition').addEventListener('click', applyPosition);
+//   document.getElementById('applyDimensions').addEventListener('click', applyDimensions);
+//   document.getElementById('parentAll').addEventListener('click', parentAllModels);
+
+//   // Add event listeners for mouse interaction
+//   window.addEventListener('mousemove', onMouseMove, false);
+//   window.addEventListener('click', onClick, false);
+
+//   // Start rendering the scene
+//   animate();
+// }
+
+// function loadModel(modelPath, modelName) {
+//   loader.load(modelPath, function(gltf) {
+//     const model = gltf.scene;
+//     model.name = modelName; // Store model name for identification
+
+//     if (!firstModel) {
+//       // This is the first model
+//       firstModel = model;
+//       scene.add(firstModel);
+//     } else {
+//       // Add model to the scene (not parented yet)
+//       scene.add(model);
+//     }
+
+//     models.push(model); // Add to models list
+
+//     console.log(firstModel); // Debugging: Check the hierarchy
+
+//     // Disable buttons once a model is added
+//     document.getElementById('AddWindowFrame1').disabled = true;
+//     document.getElementById('AddWindowFrame2').disabled = true;
+//     document.getElementById('addModel3').disabled = firstModel ? false : true; // Enable/Disable based on firstModel
+//   }, undefined, function(error) {
+//     console.error(error);
+//   });
+// }
+
+// function applyTexture(texturePath) {
+//   if (currentModel) {
+//     textureLoader.load(texturePath, function(texture) {
+//       currentModel.traverse((child) => {
+//         if (child.isMesh) {
+//           child.material.map = texture;
+//           child.material.needsUpdate = true;
+//         }
+//       });
+//     }, undefined, function(error) {
+//       console.error(error);
+//     });
+//   } else {
+//     console.log('No model selected to apply texture.');
+//   }
+// }
+
+// function applyPosition() {
+//   if (currentModel) {
+//     const x = parseFloat(document.getElementById('posX').value);
+//     const y = parseFloat(document.getElementById('posY').value);
+//     const z = parseFloat(document.getElementById('posZ').value);
+
+//     currentModel.position.set(x, y, z);
+//   } else {
+//     console.log('No model selected to apply position.');
+//   }
+// }
+
+// function applyDimensions() {
+//   if (currentModel) {
+//     const length = parseFloat(document.getElementById('length').value);
+//     const width = parseFloat(document.getElementById('width').value);
+//     const height = parseFloat(document.getElementById('height').value);
+
+//     currentModel.scale.set(length, height, width);
+//   } else {
+//     console.log('No model selected to apply dimensions.');
+//   }
+// }
+
+// function parentAllModels() {
+//   if (firstModel && models.length > 1) {
+//     models.forEach((model, index) => {
+//       if (index !== 0) { // Skip the first model (it’s the parent already)
+//         firstModel.add(model);
+//         model.position.set(0, 0, 0); // Optional: Adjust the position if needed
+//       }
+//     });
+//     console.log('All models parented to the first model');
+//   } else {
+//     console.log('No models to parent or only one model loaded.');
+//   }
+// }
+
+// function onMouseMove(event) {
+//   event.preventDefault();
+
+//   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+//   mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+// }
+
+// function onClick(event) {
+//   event.preventDefault();
+
+//   raycaster.setFromCamera(mouse, camera);
+
+//   const intersects = raycaster.intersectObjects(models, true);
+
+//   if (intersects.length > 0) {
+//     if (currentModel) {
+//       currentModel.traverse((child) => {
+//         if (child.isMesh) {
+//           child.material.emissive.set(0x000000);
+//         }
+//       });
+//     }
+
+//     currentModel = intersects[0].object.parent;
+
+//     currentModel.traverse((child) => {
+//       if (child.isMesh) {
+//         child.material.emissive.set(0x555555);
+//       }
+//     });
+
+//     updateControls();
+//   }
+// }
+
+// function updateControls() {
+//   if (currentModel) {
+//     document.getElementById('posX').value = currentModel.position.x.toFixed(1);
+//     document.getElementById('posY').value = currentModel.position.y.toFixed(1);
+//     document.getElementById('posZ').value = currentModel.position.z.toFixed(1);
+
+//     document.getElementById('length').value = currentModel.scale.x.toFixed(1);
+//     document.getElementById('width').value = currentModel.scale.z.toFixed(1);
+//     document.getElementById('height').value = currentModel.scale.y.toFixed(1);
+//   }
+// }
+
+// function animate() {
+//   requestAnimationFrame(animate);
+//   controls.update();
+//   renderer.render(scene, camera);
+// }
+
+// init();
+
+
+
+
+
+
+
+
+
+
+// let scene, camera, renderer, loader, textureLoader, controls;
+// let models = [];
+// let currentModel = null;
+// let raycaster, mouse;
+// let firstModel = null;
+
+// function init() {
+//   // Create a scene
+//   scene = new THREE.Scene();
+  
+//   // Create a camera
+//   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+//   camera.position.z = 5;
+  
+//   // Create a renderer
+//   renderer = new THREE.WebGLRenderer({ antialias: true });
+//   renderer.setSize(window.innerWidth, window.innerHeight);
+//   document.body.appendChild(renderer.domElement);
+  
+//   // Add ambient light
+//   const light = new THREE.AmbientLight(0x404040);
+//   scene.add(light);
+
+//   // Add directional light
+//   const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+//   directionalLight.position.set(0.5, 1, 1).normalize();
+//   scene.add(directionalLight);
+
+//   // Load HDRI environment map
+//   const rgbeLoader = new THREE.RGBELoader();
+//   rgbeLoader.setPath('environment/'); // Set the path to the HDRI file
+//   rgbeLoader.load('outdoor.hdr', function(texture) {
+//     texture.mapping = THREE.EquirectangularReflectionMapping;
+//     scene.environment = texture;
+//     scene.background = texture;
+//     console.log("HDRI loaded successfully");
+//   }, undefined, function(error) {
+//     console.error('Error loading HDRI file:', error);
+//   });
+
+//   // Initialize loaders
+//   loader = new THREE.GLTFLoader();
+//   textureLoader = new THREE.TextureLoader();
+
+//   // Initialize controls
+//   controls = new THREE.OrbitControls(camera, renderer.domElement);
+//   controls.enableDamping = true;
+//   controls.dampingFactor = 0.25;
+//   controls.enableZoom = true;
+
+//   // Initialize raycaster and mouse
+//   raycaster = new THREE.Raycaster();
+//   mouse = new THREE.Vector2();
+
+//   // Add event listeners for buttons
+//   document.getElementById('AddWindowFrame1').addEventListener('click', () => loadModel('models/windows1.glb', 'Window 1'));
+//   document.getElementById('AddWindowFrame2').addEventListener('click', () => loadModel('models/windows2.glb', 'Window 2'));
+//   document.getElementById('addModel3').addEventListener('click', () => loadModel('models/torus.glb', 'Torus'));
+//   document.getElementById('texture1').addEventListener('click', () => applyTexture('clay.jpg'));
+//   document.getElementById('texture2').addEventListener('click', () => applyTexture('rubber.jpg'));
+//   document.getElementById('applyPosition').addEventListener('click', applyPosition);
+//   document.getElementById('applyDimensions').addEventListener('click', applyDimensions);
+
+//   // Add event listeners for mouse interaction
+//   window.addEventListener('mousemove', onMouseMove, false);
+//   window.addEventListener('click', onClick, false);
+
+//   // Start rendering the scene
+//   animate();
+// }
+
+// function loadModel(modelPath, modelName) {
+//   loader.load(modelPath, function(gltf) {
+//     const model = gltf.scene;
+//     model.name = modelName; // Store model name for identification
+
+//     if (!firstModel) {
+//       // This is the first model
+//       firstModel = model;
+//       scene.add(firstModel);
+//     } else if (modelName === 'Torus') {
+//       // Make the Torus a child of the first model
+//       firstModel.add(model);
+//       model.position.set(0, 0, 0); // Optional: Adjust the position if needed
+//       model.scale.set(1, 1, 1); // Optional: Adjust the scale if needed
+//     } else {
+//       // This is not the first model and not the Torus, make it a child of the first model
+//       firstModel.add(model);
+//     }
+
+//     models.push(model); // Add to models list
+
+//     console.log(firstModel); // Debugging: Check the hierarchy
+
+//     // Disable buttons once a model is added
+//     document.getElementById('AddWindowFrame1').disabled = true;
+//     document.getElementById('AddWindowFrame2').disabled = true;
+//     document.getElementById('addModel3').disabled = firstModel ? false : true; // Enable/Disable based on firstModel
+//   }, undefined, function(error) {
+//     console.error(error);
+//   });
+// }
+
+
+// function applyTexture(texturePath) {
+//   if (currentModel) {
+//     textureLoader.load(texturePath, function(texture) {
+//       currentModel.traverse((child) => {
+//         if (child.isMesh) {
+//           child.material.map = texture;
+//           child.material.needsUpdate = true;
+//         }
+//       });
+//     }, undefined, function(error) {
+//       console.error(error);
+//     });
+//   } else {
+//     console.log('No model selected to apply texture.');
+//   }
+// }
+
+// function applyPosition() {
+//   if (currentModel) {
+//     const x = parseFloat(document.getElementById('posX').value);
+//     const y = parseFloat(document.getElementById('posY').value);
+//     const z = parseFloat(document.getElementById('posZ').value);
+
+//     currentModel.position.set(x, y, z);
+//   } else {
+//     console.log('No model selected to apply position.');
+//   }
+// }
+
+// function applyDimensions() {
+//   if (currentModel) {
+//     const length = parseFloat(document.getElementById('length').value);
+//     const width = parseFloat(document.getElementById('width').value);
+//     const height = parseFloat(document.getElementById('height').value);
+
+//     currentModel.scale.set(length, height, width);
+//   } else {
+//     console.log('No model selected to apply dimensions.');
+//   }
+// }
+
+// function onMouseMove(event) {
+//   event.preventDefault();
+
+//   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+//   mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+// }
+
+// function onClick(event) {
+//   event.preventDefault();
+
+//   raycaster.setFromCamera(mouse, camera);
+
+//   const intersects = raycaster.intersectObjects(models, true);
+
+//   if (intersects.length > 0) {
+//     if (currentModel) {
+//       currentModel.traverse((child) => {
+//         if (child.isMesh) {
+//           child.material.emissive.set(0x000000);
+//         }
+//       });
+//     }
+
+//     currentModel = intersects[0].object.parent;
+
+//     currentModel.traverse((child) => {
+//       if (child.isMesh) {
+//         child.material.emissive.set(0x555555);
+//       }
+//     });
+
+//     updateControls();
+//   }
+// }
+
+// function updateControls() {
+//   if (currentModel) {
+//     document.getElementById('posX').value = currentModel.position.x.toFixed(1);
+//     document.getElementById('posY').value = currentModel.position.y.toFixed(1);
+//     document.getElementById('posZ').value = currentModel.position.z.toFixed(1);
+
+//     document.getElementById('length').value = currentModel.scale.x.toFixed(1);
+//     document.getElementById('width').value = currentModel.scale.z.toFixed(1);
+//     document.getElementById('height').value = currentModel.scale.y.toFixed(1);
+//   }
+// }
+
+// function animate() {
+//   requestAnimationFrame(animate);
+//   controls.update();
+//   renderer.render(scene, camera);
+// }
+
+// init();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// let scene, camera, renderer, loader, textureLoader, controls;
+// let models = [];
+// let currentModel = null;
+// let raycaster, mouse;
+
+// function init() {
+//   // Create a scene
+//   scene = new THREE.Scene();
+  
+//   // Create a camera
+//   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+//   camera.position.z = 5;
+  
+//   // Create a renderer
+//   renderer = new THREE.WebGLRenderer({ antialias: true });
+//   renderer.setSize(window.innerWidth, window.innerHeight);
+//   document.body.appendChild(renderer.domElement);
+  
+//   // Add ambient light
+//   const light = new THREE.AmbientLight(0x404040);
+//   scene.add(light);
+
+//   // Add directional light
+//   const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+//   directionalLight.position.set(0.5, 1, 1).normalize();
+//   scene.add(directionalLight);
+
+//   // Load HDRI environment map
+//   const rgbeLoader = new THREE.RGBELoader();
+//   rgbeLoader.setPath('environment/'); // Set the path to the HDRI file
+//   rgbeLoader.load('outdoor.hdr', function(texture) {
+//     texture.mapping = THREE.EquirectangularReflectionMapping;
+//     scene.environment = texture;
+//     scene.background = texture;
+//     console.log("HDRI loaded successfully");
+//   }, undefined, function(error) {
+//     console.error('Error loading HDRI file:', error);
+//   });
+
+//   // Initialize loaders
+//   loader = new THREE.GLTFLoader();
+//   textureLoader = new THREE.TextureLoader();
+
+//   // Initialize controls
+//   controls = new THREE.OrbitControls(camera, renderer.domElement);
+//   controls.enableDamping = true;
+//   controls.dampingFactor = 0.25;
+//   controls.enableZoom = true;
+
+//   // Initialize raycaster and mouse
+//   raycaster = new THREE.Raycaster();
+//   mouse = new THREE.Vector2();
+
+//   // Disable the Model 3 button initially
+//   document.getElementById('addModel3').disabled = true;
+
+//   // Add event listeners for buttons
+//   document.getElementById('AddWindowFrame1').addEventListener('click', () => loadModel('models/windows1.glb', 'Window 1'));
+//   document.getElementById('AddWindowFrame2').addEventListener('click', () => loadModel('models/windows2.glb', 'Window 2'));
+//   document.getElementById('addModel3').addEventListener('click', () => loadModel('models/torus.glb', 'Model 3'));
+//   document.getElementById('texture1').addEventListener('click', () => applyTexture('clay.jpg'));
+//   document.getElementById('texture2').addEventListener('click', () => applyTexture('rubber.jpg'));
+//   document.getElementById('applyPosition').addEventListener('click', applyPosition);
+//   document.getElementById('applyDimensions').addEventListener('click', applyDimensions);
+
+//   // Add event listeners for mouse interaction
+//   window.addEventListener('mousemove', onMouseMove, false);
+//   window.addEventListener('click', onClick, false);
+
+//   // Start rendering the scene
+//   animate();
+// }
+
+// function loadModel(modelPath, modelName) {
+//   loader.load(modelPath, function(gltf) {
+//     const model = gltf.scene;
+//     model.name = modelName; // Store model name for identification
+//     models.push(model); // Add to models list
+//     scene.add(model);
+
+//     // Disable Window 1 and 2 buttons once a model is added
+//     document.getElementById('AddWindowFrame1').disabled = true;
+//     document.getElementById('AddWindowFrame2').disabled = true;
+
+//     // Enable the Model 3 button after Window 1 or 2 is added
+//     if (modelName === 'Window 1' || modelName === 'Window 2') {
+//       document.getElementById('addModel3').disabled = false;
+//     }
+//   }, undefined, function(error) {
+//     console.error(error);
+//   });
+// }
+
+// function applyTexture(texturePath) {
+//   if (currentModel) {
+//     textureLoader.load(texturePath, function(texture) {
+//       currentModel.traverse((child) => {
+//         if (child.isMesh) {
+//           child.material.map = texture;
+//           child.material.needsUpdate = true;
+//         }
+//       });
+//     }, undefined, function(error) {
+//       console.error(error);
+//     });
+//   } else {
+//     console.log('No model selected to apply texture.');
+//   }
+// }
+
+// function applyPosition() {
+//   if (currentModel) {
+//     const x = parseFloat(document.getElementById('posX').value);
+//     const y = parseFloat(document.getElementById('posY').value);
+//     const z = parseFloat(document.getElementById('posZ').value);
+
+//     currentModel.position.set(x, y, z);
+//   } else {
+//     console.log('No model selected to apply position.');
+//   }
+// }
+
+// function applyDimensions() {
+//   if (currentModel) {
+//     const length = parseFloat(document.getElementById('length').value);
+//     const width = parseFloat(document.getElementById('width').value);
+//     const height = parseFloat(document.getElementById('height').value);
+
+//     currentModel.scale.set(length, height, width);
+//   } else {
+//     console.log('No model selected to apply dimensions.');
+//   }
+// }
+
+// function onMouseMove(event) {
+//   event.preventDefault();
+
+//   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+//   mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+// }
+
+// function onClick(event) {
+//   event.preventDefault();
+
+//   raycaster.setFromCamera(mouse, camera);
+
+//   const intersects = raycaster.intersectObjects(models, true);
+
+//   if (intersects.length > 0) {
+//     if (currentModel) {
+//       currentModel.traverse((child) => {
+//         if (child.isMesh) {
+//           child.material.emissive.set(0x000000);
+//         }
+//       });
+//     }
+
+//     currentModel = intersects[0].object.parent;
+
+//     currentModel.traverse((child) => {
+//       if (child.isMesh) {
+//         child.material.emissive.set(0x555555);
+//       }
+//     });
+
+//     updateControls();
+//   }
+// }
+
+// function updateControls() {
+//   if (currentModel) {
+//     document.getElementById('posX').value = currentModel.position.x.toFixed(1);
+//     document.getElementById('posY').value = currentModel.position.y.toFixed(1);
+//     document.getElementById('posZ').value = currentModel.position.z.toFixed(1);
+
+//     document.getElementById('length').value = currentModel.scale.x.toFixed(1);
+//     document.getElementById('width').value = currentModel.scale.z.toFixed(1);
+//     document.getElementById('height').value = currentModel.scale.y.toFixed(1);
+//   }
+// }
+
+// function animate() {
+//   requestAnimationFrame(animate);
+//   controls.update();
+//   renderer.render(scene, camera);
+// }
+
+// init();
+
+

@@ -1,15 +1,103 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Cube and Circle</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        input[type=range] {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <label for="xRange">X Position: </label>
+        <input id="xRange" type="range" min="-0.3" max="0.3" step="0.01" value="0">
+        <br>
+        <label for="yRange">Y Position: </label>
+        <input id="yRange" type="range" min="-0.3" max="0.3" step="0.01" value="0">
+        <br>
+        <label for="zRange">Z Position: </label>
+        <input id="zRange" type="range" min="-0.3" max="0.3" step="0.01" value="0">
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene, camera, and renderer setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
+        // Create the parent cube
+        const geometryCube = new THREE.BoxGeometry();
+        const materialCube = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        const cube = new THREE.Mesh(geometryCube, materialCube);
+        scene.add(cube);
 
+        // Create the child circle
+        const geometryCircle = new THREE.CircleGeometry(0.2, 32);
+        const materialCircle = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const circle = new THREE.Mesh(geometryCircle, materialCircle);
+        
+        // Set the initial position of the circle inside the cube
+        circle.position.set(0, 0, 0);
+        cube.add(circle);
 
+        camera.position.z = 5;
 
+        // Rendering loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
 
+        // Handle range input to move the circle inside the cube
+        const xRange = document.getElementById('xRange');
+        const yRange = document.getElementById('yRange');
+        const zRange = document.getElementById('zRange');
+
+        xRange.addEventListener('input', () => {
+            circle.position.x = THREE.MathUtils.clamp(parseFloat(xRange.value), -0.3, 0.3);
+        });
+
+        yRange.addEventListener('input', () => {
+            circle.position.y = THREE.MathUtils.clamp(parseFloat(yRange.value), -0.3, 0.3);
+        });
+
+        zRange.addEventListener('input', () => {
+            circle.position.z = THREE.MathUtils.clamp(parseFloat(zRange.value), -0.3, 0.3);
+        });
+
+        // Adjust canvas on window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html> -->
 
 
 
 
 
 <!-- cube selection show  -->
-<!-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -90,7 +178,7 @@
 </script>
 
 </body>
-</html> -->
+</html>
 
 
 
@@ -173,7 +261,7 @@
 </script>
 
 </body>
-</html> --> 
+</html> 
 
 
 
@@ -181,7 +269,7 @@
 
 
 <!-- dimesion changes -->
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -259,7 +347,7 @@
         });
     </script>
 </body>
-</html>
+</html> -->
 
 
 

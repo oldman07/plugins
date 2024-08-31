@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Cube and Torus</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div class="control-group">
+            <label for="cubeX">Cube X:</label>
+            <input type="number" id="cubeX" value="0">
+        </div>
+        <div class="control-group">
+            <label for="cubeY">Cube Y:</label>
+            <input type="number" id="cubeY" value="0">
+        </div>
+        <div class="control-group">
+            <label for="cubeZ">Cube Z:</label>
+            <input type="number" id="cubeZ" value="0">
+        </div>
+        <div class="control-group">
+            <label for="torusX">Torus X:</label>
+            <input type="number" id="torusX" value="0">
+        </div>
+        <div class="control-group">
+            <label for="torusY">Torus Y:</label>
+            <input type="number" id="torusY" value="0">
+        </div>
+        <div class="control-group">
+            <label for="torusZ">Torus Z:</label>
+            <input type="number" id="torusZ" value="0">
+        </div>
+        <button id="addTorus">Add Another Torus</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Cube (Parent)
+        const cubeGeometry = new THREE.BoxGeometry();
+        const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        scene.add(cube);
+
+        // Initial Torus (Child)
+        const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
+        const torusMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+        cube.add(torus);
+
+        // Initial Positions
+        cube.position.set(0, 0, 0);
+        torus.position.set(0, 0, 0);
+
+        // Camera Position
+        camera.position.z = 5;
+
+        // Render Function
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Update positions based on input values
+        document.getElementById('cubeX').addEventListener('input', function () {
+            cube.position.x = parseFloat(this.value);
+        });
+
+        document.getElementById('cubeY').addEventListener('input', function () {
+            cube.position.y = parseFloat(this.value);
+        });
+
+        document.getElementById('cubeZ').addEventListener('input', function () {
+            cube.position.z = parseFloat(this.value);
+        });
+
+        document.getElementById('torusX').addEventListener('input', function () {
+            torus.position.x = parseFloat(this.value);
+        });
+
+        document.getElementById('torusY').addEventListener('input', function () {
+            torus.position.y = parseFloat(this.value);
+        });
+
+        document.getElementById('torusZ').addEventListener('input', function () {
+            torus.position.z = parseFloat(this.value);
+        });
+
+        // Add Another Torus Button
+        document.getElementById('addTorus').addEventListener('click', function () {
+            // Create a new Torus
+            const newTorusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
+            const newTorusMaterial = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+            const newTorus = new THREE.Mesh(newTorusGeometry, newTorusMaterial);
+
+            // Position the new torus relative to the original torus
+            newTorus.position.set(torus.position.x + 2, torus.position.y, torus.position.z);
+
+            // Add the new torus as a child of the cube
+            cube.add(newTorus);
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Cube and Torus</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div class="control-group">
+            <label for="cubeX">Cube X:</label>
+            <input type="number" id="cubeX" value="0">
+        </div>
+        <div class="control-group">
+            <label for="cubeY">Cube Y:</label>
+            <input type="number" id="cubeY" value="0">
+        </div>
+        <div class="control-group">
+            <label for="cubeZ">Cube Z:</label>
+            <input type="number" id="cubeZ" value="0">
+        </div>
+        <div class="control-group">
+            <label for="torusX">Torus X:</label>
+            <input type="number" id="torusX" value="0">
+        </div>
+        <div class="control-group">
+            <label for="torusY">Torus Y:</label>
+            <input type="number" id="torusY" value="0">
+        </div>
+        <div class="control-group">
+            <label for="torusZ">Torus Z:</label>
+            <input type="number" id="torusZ" value="0">
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Cube (Parent)
+        const cubeGeometry = new THREE.BoxGeometry();
+        const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        scene.add(cube);
+
+        // Torus (Child)
+        const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
+        const torusMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+        cube.add(torus);
+
+        // Initial Positions
+        cube.position.set(0, 0, 0);
+        torus.position.set(0, 0, 0);
+
+        // Camera Position
+        camera.position.z = 5;
+
+        // Render Function
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Update positions based on input values
+        document.getElementById('cubeX').addEventListener('input', function () {
+            cube.position.x = parseFloat(this.value);
+        });
+
+        document.getElementById('cubeY').addEventListener('input', function () {
+            cube.position.y = parseFloat(this.value);
+        });
+
+        document.getElementById('cubeZ').addEventListener('input', function () {
+            cube.position.z = parseFloat(this.value);
+        });
+
+        document.getElementById('torusX').addEventListener('input', function () {
+            torus.position.x = parseFloat(this.value);
+        });
+
+        document.getElementById('torusY').addEventListener('input', function () {
+            torus.position.y = parseFloat(this.value);
+        });
+
+        document.getElementById('torusZ').addEventListener('input', function () {
+            torus.position.z = parseFloat(this.value);
+        });
+    </script>
+</body>
+</html> -->
