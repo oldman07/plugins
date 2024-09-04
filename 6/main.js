@@ -56,11 +56,11 @@ function init() {
   document.getElementById('AddWindowFrame1').addEventListener('click', () => loadModel('models/windows1.glb', 'Window 1'));
   document.getElementById('AddWindowFrame2').addEventListener('click', () => loadModel('models/windows2.glb', 'Window 2'));
   document.getElementById('addModel3').addEventListener('click', () => loadModel('models/torus.glb', 'Torus'));
+  document.getElementById('addWall').addEventListener('click', () => loadModel('models/wall.glb', 'Wall'));
   document.getElementById('texture1').addEventListener('click', () => applyTexture('clay.jpg'));
   document.getElementById('texture2').addEventListener('click', () => applyTexture('rubber.jpg'));
   document.getElementById('applyPosition').addEventListener('click', applyPosition);
   document.getElementById('applyDimensions').addEventListener('click', applyDimensions);
-  document.getElementById('parentAll').addEventListener('click', parentAllModels);
 
   // Add event listeners for mouse interaction
   window.addEventListener('mousemove', onMouseMove, false);
@@ -138,19 +138,6 @@ function applyDimensions() {
   }
 }
 
-function parentAllModels() {
-  if (firstModel && models.length > 1) {
-    models.forEach((model, index) => {
-      if (index !== 0) { // Skip the first model (it’s the parent already)
-        firstModel.add(model);
-        model.position.set(0, 0, 0); // Optional: Adjust the position if needed
-      }
-    });
-    console.log('All models parented to the first model');
-  } else {
-    console.log('No models to parent or only one model loaded.');
-  }
-}
 
 function onMouseMove(event) {
   event.preventDefault();

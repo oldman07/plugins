@@ -24,7 +24,7 @@ Social Media One Click is a lightweight and intuitive plugin that enables users 
 **How It Works:**
 
 1. **Install and Activate the Plugin:** Once activated, a new menu item titled "Social Media Links" will appear in your WordPress admin panel.
-2. **Add Social Media Links:** Use the provided shortcode `[social_media_links facebook="your_facebook_link" twitter="your_twitter_link" instagram="your_instagram_link"]` in any post, page, or widget to display your social media links.
+2. **Add Social Media Links:** Use the provided shortcode [social_media_links facebook="your_facebook_link" twitter="your_twitter_link" instagram="your_instagram_link"] in any post, page, or widget to display your social media links.
 3. **Style and Customize:** The plugin includes a default stylesheet, but you can easily override the styles by editing your theme's CSS.
 4. **Admin Management:** The plugin provides a settings page in the admin panel where you can manage your links and access additional submenus.
 
