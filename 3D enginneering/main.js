@@ -56,7 +56,7 @@ function init() {
   document.getElementById('texture1').addEventListener('click', () => applyTexture('textures/clay.jpg'));
   document.getElementById('texture2').addEventListener('click', () => applyTexture('textures/rubber.jpg'));
   document.getElementById('applyPosition').addEventListener('click', applyPosition);
-  document.getElementById('applyRotation').addEventListener('click', applyRotation);
+  // document.getElementById('applyRotation').addEventListener('click', applyRotation);
   document.getElementById('applyDimensions').addEventListener('click', applyDimensions);
 
   // Event listeners for mouse and keyboard interaction
@@ -199,12 +199,14 @@ document.getElementById('posX').addEventListener('input', updatePositionDisplay)
 document.getElementById('posY').addEventListener('input', updatePositionDisplay);
 document.getElementById('posZ').addEventListener('input', updatePositionDisplay);
 
+// Function to clamp rotation values to the range -360° to 360°
 function clampRotation(value) {
   while (value > 360) value -= 360;
   while (value < -360) value += 360;
   return value;
 }
 
+// Apply rotation immediately when slider is moved
 function applyRotation() {
   if (selectedModels.length === 0) return;
 
@@ -213,12 +215,12 @@ function applyRotation() {
   let y = parseFloat(document.getElementById('rotY').value);
   let z = parseFloat(document.getElementById('rotZ').value);
 
-  // Clamp the values to the range -180° to 180°
+  // Clamp the values to the range -360° to 360°
   x = clampRotation(x);
   y = clampRotation(y);
   z = clampRotation(z);
 
-  // Apply the rotation to each selected model
+  // Apply the rotation to each selected model in real-time
   selectedModels.forEach(model => {
     model.rotation.set(x * Math.PI / 180, y * Math.PI / 180, z * Math.PI / 180);
   });
@@ -229,12 +231,16 @@ function updateRotationDisplay() {
   document.getElementById('rotXValue').innerText = document.getElementById('rotX').value;
   document.getElementById('rotYValue').innerText = document.getElementById('rotY').value;
   document.getElementById('rotZValue').innerText = document.getElementById('rotZ').value;
+
+  // Apply rotation immediately when sliders are moved
+  applyRotation();
 }
 
-// Add event listeners to update display as sliders are moved
+// Add event listeners to update display and apply rotation as sliders are moved
 document.getElementById('rotX').addEventListener('input', updateRotationDisplay);
 document.getElementById('rotY').addEventListener('input', updateRotationDisplay);
 document.getElementById('rotZ').addEventListener('input', updateRotationDisplay);
+
 
 
 

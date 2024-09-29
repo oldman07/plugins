@@ -1,4 +1,4 @@
-===ADD Bootstrap and Tailwind Css ===
+===Add Bootstrap and Tailwind Css ===
 Contributors: habibalifoundation
 Tags: bootstrap, tailwind, css, frontend, styles
 Requires at least: 5.6

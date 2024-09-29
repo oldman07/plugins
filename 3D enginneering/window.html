@@ -49,8 +49,14 @@
       <input type="range" id="rotZ" min="-360" max="360" step="1" value="0">
       <span id="rotZValue" class="text-white">0</span>°
     </label><br>
-    <button id="applyRotation" class="btn btn-primary mt-2">Apply Rotation</button>
+    <!-- <button id="applyRotation" class="btn btn-primary mt-2">Apply Rotation</button> -->
+    <h1>Display a Range Field</h1>
 
+    <form action="/action_page.php">
+      <label for="vol">Volume (between 0 and 50):</label>
+      <input type="range" id="vol" name="vol" min="0" max="50">
+      <input type="submit">
+    </form>
     <!-- <h3 class="text-white">Rotation</h3>
     <label class="text-white">X: <input type="number" id="rotX" step="0.1" value="0" class="form-control"></label><br>
     <label class="text-white">Y: <input type="number" id="rotY" step="0.1" value="0" class="form-control"></label><br>
